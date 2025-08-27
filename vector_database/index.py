@@ -2,6 +2,7 @@
 Written by Juan Pablo Gutierrez
 """
 
+from pinecone import IndexList
 from vector_database import pc
 from pinecone.db_control.models import ServerlessSpec, IndexModel
 from pinecone.db_control.enums import CloudProvider, AwsRegion, Metric, VectorType
@@ -48,3 +49,9 @@ def create_index(index_name: str, dimension: int, metric: Metric, vector_type: V
         return res
     
     return None
+
+def list_indexes() -> IndexList:
+    """
+    List all indexes.
+    """
+    return pc.list_indexes()
