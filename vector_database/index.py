@@ -55,10 +55,3 @@ def list_indexes() -> IndexList:
     List all indexes.
     """
     return pc.list_indexes()
-
-def get_index_host(index_name: str) -> str:
-    """
-    Get the host of an index using the index name.
-    """
-    index = pc.describe_index(index_name)
-    return index.host
