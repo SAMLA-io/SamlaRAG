@@ -9,14 +9,11 @@ from pinecone.db_control.enums import CloudProvider, AwsRegion, Metric, VectorTy
 from pinecone.inference import EmbedModel
 from typing import Dict, Optional
 
-"""
-Create a index with integrated embeddings.
-
-The index type (dense or sparse) is determined by the model.
-"""
 def create_index_integrated_embeddings(index_name: str, cloud: CloudProvider, region: AwsRegion, model: EmbedModel, metric: Metric, field_map: Dict[str, str]) -> Optional[IndexModel]:  
     """
-    Create a dense index with Pinecone.
+    Create a index with integrated embeddings.
+
+    The index type (dense or sparse) is determined by the model.
     """
     if not pc.has_index(index_name):
         res = pc.create_index_for_model(
