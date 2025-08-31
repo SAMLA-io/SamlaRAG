@@ -1,6 +1,5 @@
+from pinecone.grpc import PineconeGRPC as Pinecone
 from dotenv import load_dotenv
-
-from pinecone import Pinecone
 import os
 
 load_dotenv()
