@@ -3,13 +3,10 @@ Written by Juan Pablo Gutierrez
 """
 
 from llama_index.vector_stores.pinecone import PineconeVectorStore
-from llama_index.core.ingestion import IngestionPipeline
 from vector_database import pc
-from embeddings import get_pipeline, embed_model
+from embeddings import get_pipeline
 from llama_index.core.schema import Document
-from llama_index.core.node_parser import SemanticSplitterNodeParser
 from typing import List, Union
-import uuid
 
 def upsert_document(index_name: str, namespace: str, document: List[Union[dict, Document]]):
     """
@@ -28,5 +25,5 @@ def upsert_document(index_name: str, namespace: str, document: List[Union[dict, 
         else:
             raise ValueError(f"Unsupported document type: {type(doc)}")
 
-    pipeline = get_pipeline(PineconeVectorStore(pinecone_index=index))
+    pipeline = get_pipeline(PineconeVectorStore(pinecone_index=index, namespace=namespace))
     pipeline.run(documents=documents, show_progress=True, insert_into_vector_store=True)
