@@ -6,7 +6,7 @@ from cohere import V2RerankResponse
 from reranking import co
 
 
-def rerank(model: str, query: str, documents: list[str]) -> V2RerankResponse:
+def rerank(model: str, query: str, documents: list[str], top_n: int = 5) -> V2RerankResponse:
     """
     Rerank the documents using Cohere.
 
@@ -18,4 +18,4 @@ def rerank(model: str, query: str, documents: list[str]) -> V2RerankResponse:
     Returns:
         A list of reranked documents.
     """
-    return co.rerank(model=model, query=query, documents=documents, top_n=5)
+    return co.rerank(model=model, query=query, documents=documents, top_n=top_n)
