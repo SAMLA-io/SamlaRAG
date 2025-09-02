@@ -5,6 +5,7 @@ Written by Juan Pablo Gutierrez
 from cohere import V2RerankResponse
 from reranking import co
 
+
 def rerank(model: str, query: str, documents: list[str]) -> V2RerankResponse:
     """
     Rerank the documents using Cohere.

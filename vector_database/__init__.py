@@ -1,6 +1,11 @@
-from pinecone.grpc import PineconeGRPC as Pinecone
-from dotenv import load_dotenv
+"""
+Written by Juan Pablo Gutierrez
+"""
+
 import os
+
+from dotenv import load_dotenv
+from pinecone.grpc import PineconeGRPC as Pinecone
 
 load_dotenv()
 

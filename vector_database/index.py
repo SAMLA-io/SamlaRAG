@@ -2,14 +2,21 @@
 Written by Juan Pablo Gutierrez
 """
 
-from pinecone import IndexList
-from vector_database import pc
+from typing import Dict, Optional
 from pinecone.db_control.models import ServerlessSpec, IndexModel
 from pinecone.db_control.enums import CloudProvider, AwsRegion, Metric, VectorType
 from pinecone.inference import EmbedModel
-from typing import Dict, Optional
+from pinecone.db_control import IndexList
+from vector_database import pc
 
-def create_index_integrated_embeddings(index_name: str, cloud: CloudProvider, region: AwsRegion, model: EmbedModel, metric: Metric, field_map: Dict[str, str]) -> Optional[IndexModel]:  
+
+def create_index_integrated_embeddings(
+    index_name: str,
+    cloud: CloudProvider,
+    region: AwsRegion,
+    model: EmbedModel,
+    field_map: Dict[str, str],
+) -> Optional[IndexModel]:
     """
     Create a index with integrated embeddings.
 
@@ -20,18 +27,23 @@ def create_index_integrated_embeddings(index_name: str, cloud: CloudProvider, re
             name=index_name,
             cloud=cloud,
             region=region,
-            metric=metric,
             embed={
                 "model": model,
                 "field_map": field_map,
             },
         )
         return res
-    
+
     return None
 
 
-def create_index(index_name: str, dimension: int, metric: Metric, vector_type: VectorType, spec: ServerlessSpec) -> Optional[IndexModel]:
+def create_index(
+    index_name: str,
+    dimension: int,
+    metric: Metric,
+    vector_type: VectorType,
+    spec: ServerlessSpec,
+) -> Optional[IndexModel]:
     """
     Create an index from a backup.
     """
@@ -44,8 +56,9 @@ def create_index(index_name: str, dimension: int, metric: Metric, vector_type: V
             spec=spec,
         )
         return res
-    
+
     return None
+
 
 def list_indexes() -> IndexList:
     """

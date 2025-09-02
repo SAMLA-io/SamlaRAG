@@ -1,6 +1,11 @@
-from dotenv import load_dotenv
-import cohere 
+"""
+Written by Juan Pablo Gutierrez
+"""
+
 import os
+import cohere
+
+from dotenv import load_dotenv
 
 load_dotenv()
 
