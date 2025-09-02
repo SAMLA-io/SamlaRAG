@@ -1,6 +1,7 @@
 """
 Written by Juan Pablo Gutierrez
 """
+
 import os
 
 from llama_index.embeddings.openai.base import OpenAIEmbedding, OpenAIEmbeddingModelType
