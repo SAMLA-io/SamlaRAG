@@ -2,15 +2,17 @@
 Written by Juan Pablo Gutierrez
 """
 
+import os
 
-from llama_index.vector_stores.pinecone import PineconeVectorStore
-from llama_index.core.retrievers import VectorIndexRetriever
-from vector_database.index import create_index, list_indexes
-from pinecone.db_control.enums import Metric, VectorType
 from pinecone.db_control.models import ServerlessSpec
+from pinecone.db_control.enums import Metric, VectorType
+from llama_index.vector_stores.pinecone import PineconeVectorStore
 from llama_index.core import VectorStoreIndex
-from vector_database import pc
+from llama_index.core.retrievers import VectorIndexRetriever
 from dotenv import load_dotenv
+import cohere
+from vector_database.index import create_index, list_indexes
+from vector_database import pc
 
 load_dotenv()
 
@@ -19,22 +21,56 @@ indexes = list_indexes()
 for index in indexes:
     print(f"  - {index.name}")
 
-index_name = "rag"
-if not any(index.name == index_name for index in indexes):
-    print(f"Creating index '{index_name}'...")
+INDEX_NAME = "rag"
+if not any(index.name == INDEX_NAME for index in indexes):
+    print(f"Creating index '{INDEX_NAME}'...")
     create_index(
-        index_name=index_name, 
-        dimension=1536, 
-        metric=Metric.COSINE, 
-        vector_type=VectorType.DENSE, 
-        spec=ServerlessSpec(region="us-east-1", cloud="aws")
+        index_name=INDEX_NAME,
+        dimension=1536,
+        metric=Metric.COSINE,
+        vector_type=VectorType.DENSE,
+        spec=ServerlessSpec(region="us-east-1", cloud="aws"),
     )
-    print(f"Index '{index_name}' created successfully!")
+    print(f"Index '{INDEX_NAME}' created successfully!")
 else:
-    print(f"Index '{index_name}' already exists.")
+    print(f"Index '{INDEX_NAME}' already exists.")
 
-vector_store = PineconeVectorStore(pinecone_index=pc.Index(index_name))
+vector_store = PineconeVectorStore(pinecone_index=pc.Index(INDEX_NAME))
 vector_index = VectorStoreIndex.from_vector_store(vector_store=vector_store)
 
 # This is the most important part of the RAG
-retriever = VectorIndexRetriever(index=vector_index, similarity_top_k=5)
+retriever = VectorIndexRetriever(index=vector_index, similarity_top_k=10)
+response = retriever.retrieve("Compare the families of Emma Stone and Ryan Gosling")
+
+
+co = cohere.ClientV2(api_key=os.getenv("CO_API_KEY"))
+
+documents = [node.text for node in response]
+
+# Use Cohere rerank to improve retrieval quality
+rerank_results = co.rerank(
+    model="rerank-v3.5",
+    query="Compare the families of Emma Stone and Ryan Gosling",
+    documents=documents,
+    top_n=5,
+)
+
+for result in rerank_results.results:
+    print(documents[result.index][:500])
+    print(result.relevance_score)
+    print("--------------------------------")
+
+# query_engine = RetrieverQueryEngine(retriever=retriever)
+
+
+# query = "Compare the families of Emma Stone and Ryan Gosling"
+# response = query_engine.query(query)
+# print(response)
+
+
+# Print the chunks
+# for node in response.source_nodes:
+#     print('----------------------------------------------------')
+#     print(f"ID: {node.node_id}")
+#     print(f"Score: {node.score}")
+#     print(node.text[:500])
