@@ -2,15 +2,13 @@
 Written by Juan Pablo Gutierrez
 """
 
-import os
-
 from pinecone.db_control.models import ServerlessSpec
 from pinecone.db_control.enums import Metric, VectorType
 from llama_index.vector_stores.pinecone import PineconeVectorStore
 from llama_index.core import VectorStoreIndex
 from llama_index.core.retrievers import VectorIndexRetriever
 from dotenv import load_dotenv
-import cohere
+from reranking.cohere import rerank
 from vector_database.index import create_index, list_indexes
 from vector_database import pc
 
@@ -42,35 +40,16 @@ vector_index = VectorStoreIndex.from_vector_store(vector_store=vector_store)
 retriever = VectorIndexRetriever(index=vector_index, similarity_top_k=10)
 response = retriever.retrieve("Compare the families of Emma Stone and Ryan Gosling")
 
-
-co = cohere.ClientV2(api_key=os.getenv("CO_API_KEY"))
-
 documents = [node.text for node in response]
 
-# Use Cohere rerank to improve retrieval quality
-rerank_results = co.rerank(
+results = rerank(
     model="rerank-v3.5",
     query="Compare the families of Emma Stone and Ryan Gosling",
     documents=documents,
     top_n=5,
 )
 
-for result in rerank_results.results:
+for result in results.results:
     print(documents[result.index][:500])
     print(result.relevance_score)
     print("--------------------------------")
-
-# query_engine = RetrieverQueryEngine(retriever=retriever)
-
-
-# query = "Compare the families of Emma Stone and Ryan Gosling"
-# response = query_engine.query(query)
-# print(response)
-
-
-# Print the chunks
-# for node in response.source_nodes:
-#     print('----------------------------------------------------')
-#     print(f"ID: {node.node_id}")
-#     print(f"Score: {node.score}")
-#     print(node.text[:500])
