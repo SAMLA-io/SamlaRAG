@@ -2,20 +2,10 @@
 Written by Juan Pablo Gutierrez
 """
 
-from cohere import V2RerankResponse
-from reranking import co
+from llama_index.postprocessor.cohere_rerank import CohereRerank
 
-
-def rerank(model: str, query: str, documents: list[str], top_n: int = 5) -> V2RerankResponse:
+def get_cohere_reranker(model_name: str, top_n: int=3):
     """
-    Rerank the documents using Cohere.
-
-    Args:
-        model: The model to use for reranking.
-        query: The query to use for reranking.
-        documents: The documents to use for reranking.
-
-    Returns:
-        A list of reranked documents.
+    Get a CohereReranker instance.
     """
-    return co.rerank(model=model, query=query, documents=documents, top_n=top_n)
+    return CohereRerank(model=model_name, top_n=top_n)
