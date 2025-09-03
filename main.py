@@ -5,12 +5,16 @@ Written by Juan Pablo Gutierrez
 from pinecone.db_control.models import ServerlessSpec
 from pinecone.db_control.enums import Metric, VectorType
 from llama_index.vector_stores.pinecone import PineconeVectorStore
+from llama_index.core.indices.query.query_transform import StepDecomposeQueryTransform
+from llama_index.core.query_engine import RetrieverQueryEngine, TransformQueryEngine, MultiStepQueryEngine
 from llama_index.core import VectorStoreIndex
 from llama_index.core.retrievers import VectorIndexRetriever
 from dotenv import load_dotenv
-from reranking.cohere import rerank
+from reranking.cohere import get_cohere_reranker
+from reranking.flag_embedding import get_flag_reranker
 from vector_database.index import create_index, list_indexes
 from vector_database import pc
+from transformations.hyde import get_hyde_query_transform
 
 load_dotenv()
 
@@ -38,18 +42,32 @@ vector_index = VectorStoreIndex.from_vector_store(vector_store=vector_store)
 
 # This is the most important part of the RAG
 retriever = VectorIndexRetriever(index=vector_index, similarity_top_k=10)
-response = retriever.retrieve("Compare the families of Emma Stone and Ryan Gosling")
 
-documents = [node.text for node in response]
+node_postprocessor = [
+    get_cohere_reranker(model_name="rerank-v3.5", top_n=3),
+    get_flag_reranker(model_name="BAAI/bge-reranker-base", top_n=3),
+]
 
-results = rerank(
-    model="rerank-v3.5",
-    query="Compare the families of Emma Stone and Ryan Gosling",
-    documents=documents,
-    top_n=5,
+query_engine = RetrieverQueryEngine(
+    retriever=retriever,
+    node_postprocessors=node_postprocessor,
 )
 
-for result in results.results:
-    print(documents[result.index][:500])
-    print(result.relevance_score)
-    print("--------------------------------")
+hyde = get_hyde_query_transform(include_original=True)
+hyde_query_engine = TransformQueryEngine(
+    query_engine=query_engine, query_transform=hyde
+)
+
+step_decompose_transform_gpt3 = StepDecomposeQueryTransform(verbose=True)
+
+INDEX_SUMMARY = "Breaks down the initial query"
+
+multi_step_query_engine = MultiStepQueryEngine(
+    query_engine=hyde_query_engine,
+    query_transform=step_decompose_transform_gpt3,
+    index_summary=INDEX_SUMMARY,
+)
+
+QUERY = "Compare the families of Emma Stone and Ryan Gosling"
+response = multi_step_query_engine.query(QUERY)
+print(response)
