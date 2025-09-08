@@ -5,8 +5,11 @@ Written by Juan Pablo Gutierrez
 from pinecone.db_control.models import ServerlessSpec
 from pinecone.db_control.enums import Metric, VectorType
 from llama_index.vector_stores.pinecone import PineconeVectorStore
-from llama_index.core.indices.query.query_transform import StepDecomposeQueryTransform
-from llama_index.core.query_engine import RetrieverQueryEngine, TransformQueryEngine, MultiStepQueryEngine
+from llama_index.core.query_engine import (
+    RetrieverQueryEngine,
+    TransformQueryEngine,
+    MultiStepQueryEngine,
+)
 from llama_index.core import VectorStoreIndex
 from llama_index.core.retrievers import VectorIndexRetriever
 from dotenv import load_dotenv
@@ -15,6 +18,7 @@ from reranking.flag_embedding import get_flag_reranker
 from vector_database.index import create_index, list_indexes
 from vector_database import pc
 from transformations.hyde import get_hyde_query_transform
+from transformations.decompose import get_step_decompose_query_transform
 
 load_dotenv()
 
@@ -58,9 +62,9 @@ hyde_query_engine = TransformQueryEngine(
     query_engine=query_engine, query_transform=hyde
 )
 
-step_decompose_transform_gpt3 = StepDecomposeQueryTransform(verbose=True)
+step_decompose_transform_gpt3 = get_step_decompose_query_transform(verbose=True)
 
-INDEX_SUMMARY = "Breaks down the initial query"
+INDEX_SUMMARY = "An index with information about Emma Stone and Ryan Gosling"
 
 multi_step_query_engine = MultiStepQueryEngine(
     query_engine=hyde_query_engine,
