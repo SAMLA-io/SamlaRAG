@@ -1,28 +1,26 @@
 {
-    "transformations": {
-        "postprocessors": {
-            "reranker": {
-                "model": "cohere/rerank-v3.5",
-                "top_n": 3,
-                "include_original": true
-            },
-            "flag_reranker": {
-                "model": "BAAI/bge-reranker-base",
-                "top_n": 3,
-                "include_original": true
-            }
+    "query_transformers": {
+        "hyde": {
+            "llm": "gpt-4o-mini",
+            "include_original": true
         },
-        "query_transformers": {
-            "hyde": {
-                "model": "cohere/hyde-3-5-sonnet-2025-05-30",
-                "top_n": 3,
-                "include_original": true
-            },
-            "step_decompose": {
-                "model": "gpt-4o-mini",
-                "verbose": true,
-                "index_summary": "An index with information about Emma Stone and Ryan Gosling"
-            }
+        "step_decompose": {
+            "llm": "gpt-4o-mini",
+            "verbose": true,
+            "index_summary": "An index with information about Emma Stone and Ryan Gosling"
         }
+    },
+    "postprocessors": {
+        "reranker": {
+            "model": "cohere/rerank-v3.5",
+            "top_n": 3
+        },
+        "flag_reranker": {
+            "model": "BAAI/bge-reranker-base",
+            "top_n": 3
+        }
+    },
+    "query_engine": {
+        "index_summary": "An index with information about Emma Stone and Ryan Gosling"
     }
 }
