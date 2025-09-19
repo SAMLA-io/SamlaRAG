@@ -1,0 +1,32 @@
+{
+    "llms": {
+        "default": {
+            "type": "openai",
+            "model": "gpt-3.5-turbo"
+        }
+    },
+    "query_transformers": {
+        "hyde": {
+            "type": "hyde",
+            "llm": "default",
+            "include_original": true
+        }
+    },
+    "postprocessors": {
+        "reranker": {
+            "type": "cohere_rerank",
+            "model": "cohere/rerank-v3.5",
+            "top_n": 3
+        }
+    },
+    "vector_store": {
+        "type": "pinecone",
+        "index_name": "simple_rag"
+    },
+    "retriever": {
+        "similarity_top_k": 10
+    },
+    "query_engine": {
+        "index_summary": "A simple knowledge base"
+    }
+}

@@ -2,7 +2,13 @@
     "llms": {
         "gpt-4o-mini": {
             "type": "openai",
-            "model": "gpt-4o-mini"
+            "model": "gpt-4o-mini",
+            "temperature": 0.1
+        },
+        "claude-3": {
+            "type": "anthropic",
+            "model": "claude-3-sonnet-20240229",
+            "temperature": 0.2
         }
     },
     "query_transformers": {
@@ -13,15 +19,15 @@
         },
         "step_decompose": {
             "type": "step_decompose",
-            "llm": "gpt-4o-mini",
+            "llm": "claude-3",
             "verbose": true
         }
     },
     "postprocessors": {
-        "reranker": {
+        "cohere_reranker": {
             "type": "cohere_rerank",
             "model": "cohere/rerank-v3.5",
-            "top_n": 3
+            "top_n": 5
         },
         "flag_reranker": {
             "type": "flag_rerank",
@@ -31,16 +37,16 @@
     },
     "vector_store": {
         "type": "pinecone",
-        "index_name": "rag",
+        "index_name": "advanced_rag",
         "dimension": 1536,
         "metric": "cosine",
         "region": "us-east-1",
         "cloud": "aws"
     },
     "retriever": {
-        "similarity_top_k": 10
+        "similarity_top_k": 15
     },
     "query_engine": {
-        "index_summary": "An index with information about Emma Stone and Ryan Gosling"
+        "index_summary": "A comprehensive knowledge base containing information about various topics including technology, science, and entertainment"
     }
 }
