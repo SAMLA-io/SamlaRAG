@@ -31,6 +31,18 @@ from vector_database.index import list_indexes, create_index
 class RAGPipeline(BaseModel):
     """A RAG pipeline."""
 
+    query_engine: BaseQueryEngine
+
+    model_config = {"arbitrary_types_allowed": True}
+
+    def query(self, query: str) -> List[str]:
+        """Queries the RAG pipeline."""
+        response = self.query_engine.query(query)
+        docs = []
+        for node in response.source_nodes:
+            docs.append(node.node.text)
+        return docs
+
 
 class RAGBuilder(BaseModel):
     """Builds a RAG pipeline from a configuration file."""
@@ -53,7 +65,8 @@ class RAGBuilder(BaseModel):
         self._build_postprocessors()
         self._build_vector_store()
         self._build_retriever()
-        return self._build_query_engine()
+        query_engine = self._build_query_engine()
+        return RAGPipeline(query_engine=query_engine)
 
     def _build_llm(self, llm_config: Optional[LLMConfig]) -> LLM:
         """
