@@ -8,32 +8,29 @@ for building RAG pipelines.
 import json
 from typing import Dict, Any, List, Optional
 from pathlib import Path
-from dataclasses import dataclass
+
+from pydantic import BaseModel
 
 
-@dataclass
-class LLMConfig:
+class LLMConfig(BaseModel):
     """Configuration for LLM components."""
 
     type: str
     model: str
     temperature: Optional[float] = None
-    max_tokens: Optional[int] = None
 
 
-@dataclass
-class QueryTransformConfig:
+class QueryTransformConfig(BaseModel):
     """Configuration for query transform components."""
 
     type: str
-    llm: Optional[str] = None
+    llm_config: Optional[LLMConfig] = None
     include_original: Optional[bool] = None
     verbose: Optional[bool] = None
     index_summary: Optional[str] = None
 
 
-@dataclass
-class PostprocessorConfig:
+class PostprocessorConfig(BaseModel):
     """Configuration for postprocessor components."""
 
     type: str
@@ -41,50 +38,49 @@ class PostprocessorConfig:
     top_n: Optional[int] = None
 
 
-@dataclass
-class VectorStoreConfig:
+class VectorStoreConfig(BaseModel):
     """Configuration for vector store."""
 
     type: str
     index_name: str
     dimension: Optional[int] = None
     metric: Optional[str] = None
+    vector_type: Optional[str] = None
     region: Optional[str] = None
     cloud: Optional[str] = None
 
 
-@dataclass
-class RetrieverConfig:
+class RetrieverConfig(BaseModel):
     """Configuration for retriever."""
 
     similarity_top_k: int = 10
 
 
-@dataclass
-class QueryEngineConfig:
+class QueryEngineConfig(BaseModel):
     """Configuration for query engine."""
 
     index_summary: Optional[str] = None
 
 
-@dataclass
-class RAGPipelineConfig:
+class RAGPipelineConfig(BaseModel):
     """Complete RAG pipeline configuration."""
 
-    llms: Dict[str, LLMConfig]
-    query_transformers: Dict[str, QueryTransformConfig]
-    postprocessors: Dict[str, PostprocessorConfig]
+    llm: LLMConfig
+    query_transformers: List[QueryTransformConfig]
+    postprocessors: List[PostprocessorConfig]
     vector_store: VectorStoreConfig
     retriever: RetrieverConfig
     query_engine: QueryEngineConfig
 
 
-class ConfigReader:
+class ConfigReader(BaseModel):
     """Reads and validates RAG pipeline configuration from JSON files."""
 
+    config_path: Path
+    _config: Optional[RAGPipelineConfig] = None
+
     def __init__(self, config_path: str):
-        self.config_path = Path(config_path)
-        self._config: Optional[RAGPipelineConfig] = None
+        super().__init__(config_path=Path(config_path))
 
     def load_config(self) -> RAGPipelineConfig:
         """Load and parse the configuration file."""
@@ -99,28 +95,27 @@ class ConfigReader:
     def _parse_config(self, raw_config: Dict[str, Any]) -> RAGPipelineConfig:
         """Parse raw configuration into structured format."""
         # Parse LLMs
-        llms = {}
-        for name, config in raw_config.get("llms", {}).items():
-            llms[name] = LLMConfig(
-                type=config.get("type", "openai"),
-                model=config.get("model", "gpt-3.5-turbo"),
-                temperature=config.get("temperature"),
-                max_tokens=config.get("max_tokens"),
-            )
+        llm_config = raw_config.get("llm", {})
+        llm = LLMConfig(
+            type=llm_config.get("type", "openai"),
+            model=llm_config.get("model", "gpt-4o-mini"),
+            temperature=llm_config.get("temperature"),
+        )
 
         # Parse query transformers
-        query_transformers = {}
+        query_transformers = []
         for name, config in raw_config.get("query_transformers", {}).items():
-            query_transformers[name] = QueryTransformConfig(
+            qt_config = QueryTransformConfig(
                 type=config.get("type", name),  # Use name as type if not specified
-                llm=config.get("llm"),
+                llm_config=LLMConfig(**config.get("llm")),
                 include_original=config.get("include_original"),
                 verbose=config.get("verbose"),
                 index_summary=config.get("index_summary"),
             )
+            query_transformers.append(qt_config)
 
         # Parse postprocessors
-        postprocessors = {}
+        postprocessors = []
         for name, config in raw_config.get("postprocessors", {}).items():
             # Determine type based on name or explicit type
             if "cohere" in name.lower():
@@ -130,11 +125,12 @@ class ConfigReader:
             else:
                 postprocessor_type = config.get("type", "cohere_rerank")
 
-            postprocessors[name] = PostprocessorConfig(
+            pp_config = PostprocessorConfig(
                 type=postprocessor_type,
                 model=config.get("model"),
                 top_n=config.get("top_n", 3),
             )
+            postprocessors.append(pp_config)
 
         # Parse vector store
         vector_store_config = raw_config.get("vector_store", {})
@@ -143,6 +139,7 @@ class ConfigReader:
             index_name=vector_store_config.get("index_name", "rag"),
             dimension=vector_store_config.get("dimension", 1536),
             metric=vector_store_config.get("metric", "cosine"),
+            vector_type=vector_store_config.get("vector_type", "dense"),
             region=vector_store_config.get("region", "us-east-1"),
             cloud=vector_store_config.get("cloud", "aws"),
         )
@@ -160,7 +157,7 @@ class ConfigReader:
         )
 
         return RAGPipelineConfig(
-            llms=llms,
+            llm=llm,
             query_transformers=query_transformers,
             postprocessors=postprocessors,
             vector_store=vector_store,
@@ -184,11 +181,17 @@ class ConfigReader:
             errors.append(f"Failed to load configuration: {str(e)}")
             return errors
 
+        # Build lookup sets for names
+        llm_names = set(getattr(llm, "name", None) for llm in config.llms)
+        qt_names = set(getattr(qt, "name", None) for qt in config.query_transformers)
+
         # Validate LLM references in query transformers
-        for name, transform_config in config.query_transformers.items():
-            if transform_config.llm and transform_config.llm not in config.llms:
+        for qt in config.query_transformers:
+            transform_config = qt
+            qt_name = getattr(qt, "name", None)
+            if transform_config.llm_config and transform_config.llm_config not in llm_names:
                 errors.append(
-                    f"Query transformer '{name}' references unknown LLM '{transform_config.llm}'"
+                    f"Query transformer '{qt_name}' references unknown LLM '{transform_config.llm_config}'"
                 )
 
         # Validate required fields
