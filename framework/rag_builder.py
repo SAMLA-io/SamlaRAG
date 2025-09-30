@@ -8,6 +8,7 @@ from typing import Optional, List
 from pydantic import BaseModel
 from llama_index.llms.openai import OpenAI
 from llama_index.core.llms.llm import LLM
+from llama_index.core.indices.query.query_transform import HyDEQueryTransform
 from llama_index.core.indices.query.query_transform.base import BaseQueryTransform
 from llama_index.core.postprocessor.types import BaseNodePostprocessor
 from llama_index.vector_stores.pinecone import PineconeVectorStore
@@ -16,9 +17,9 @@ from llama_index.core.retrievers import VectorIndexRetriever, BaseRetriever
 from llama_index.core.base.base_query_engine import BaseQueryEngine
 from llama_index.core.query_engine.multistep_query_engine import MultiStepQueryEngine
 from pinecone.db_control.models import ServerlessSpec
-from transformations.decompose import StepDecomposeQueryTransform
-from llama_index.core.query_engine import RetrieverQueryEngine
+from llama_index.core.query_engine import RetrieverQueryEngine, TransformQueryEngine
 
+from transformations.decompose import StepDecomposeQueryTransform
 from transformations.decompose import get_step_decompose_query_transform
 from transformations.hyde import get_hyde_query_transform
 from framework.config_reader import ConfigReader, RAGPipelineConfig, LLMConfig
@@ -92,7 +93,9 @@ class RAGBuilder(BaseModel):
                 case "hyde":
                     query_transformers.append(get_hyde_query_transform(llm))
                 case "step_decompose":
-                    query_transformers.append(get_step_decompose_query_transform(llm, verbose=True))
+                    query_transformers.append(
+                        get_step_decompose_query_transform(llm, verbose=True)
+                    )
                 case _:
                     raise ValueError(f"Unsupported query transformer type: {qt.type}")
 
@@ -184,7 +187,6 @@ class RAGBuilder(BaseModel):
         query_transformers = self._build_query_transformers()
 
         if len(query_transformers) > 1:
-            # Create a query engine from the retriever for MultiStepQueryEngine
             retriever = self._build_retriever()
             index = self._build_vector_index()
             base_query_engine = RetrieverQueryEngine(
@@ -192,8 +194,16 @@ class RAGBuilder(BaseModel):
                 node_postprocessors=self._build_postprocessors(),
             )
 
-            ## MISSING: IMPLEMENT HYDE AND ALL OTHER QUERY TRANSFORMERS BEFORE STEP DECOMPOSE
-            query_transform = next(
+            hyde_transform = next(
+                (qt for qt in query_transformers if isinstance(qt, HyDEQueryTransform)),
+                None,
+            )
+
+            hyde_query_engine = TransformQueryEngine(
+                query_engine=base_query_engine, query_transform=hyde_transform
+            )
+
+            step_decompose_query_transform = next(
                 (
                     qt
                     for qt in query_transformers
@@ -203,8 +213,8 @@ class RAGBuilder(BaseModel):
             )
 
             return MultiStepQueryEngine(
-                query_engine=base_query_engine,
-                query_transform=query_transform,
+                query_engine=hyde_query_engine,
+                query_transform=step_decompose_query_transform,
                 index_summary=self.rag_pipeline_config.query_engine.index_summary,
             )
         else:
