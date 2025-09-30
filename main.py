@@ -12,6 +12,7 @@ from llama_index.core.query_engine import (
 )
 from llama_index.core import VectorStoreIndex
 from llama_index.core.retrievers import VectorIndexRetriever
+from openai import OpenAI
 from dotenv import load_dotenv
 from reranking.cohere import get_cohere_reranker
 from reranking.flag_embedding import get_flag_reranker
@@ -88,5 +89,22 @@ else:
 
     rag_builder = RAGBuilder("config_examples/advanced_config.json")
     pipeline = rag_builder.build_pipeline()
-    response = pipeline.query("Compare the families of Emma Stone and Ryan Gosling")
-    print("Response:", response)
+    context = pipeline.query("Compare the families of Emma Stone and Ryan Gosling")
+
+    client = OpenAI()
+
+    response = client.responses.create(
+        model="gpt-4.1",
+        input=[
+            {"role": "user", "content": f"Context: {context}"},
+            {
+                "role": "user",
+                "content": """
+                Question: Compare the families of Emma Stone and 
+                Ryan Gosling. Give the answer in a single paragraph
+                """,
+            },
+        ],
+    )
+
+    print("Response:", response.output[0].content[0].text)
