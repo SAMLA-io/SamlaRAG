@@ -4,7 +4,7 @@ Written by Juan Pablo Gutierrez
 
 from llama_index.postprocessor.cohere_rerank import CohereRerank
 
-def get_cohere_reranker(model_name: str, top_n: int=3):
+def get_cohere_reranker(model_name: str, top_n: int=3) -> CohereRerank:
     """
     Get a CohereReranker instance.
     """

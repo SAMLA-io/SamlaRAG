@@ -4,7 +4,7 @@ Written by Juan Pablo Gutierrez
 
 from llama_index.postprocessor.flag_embedding_reranker import FlagEmbeddingReranker
 
-def get_flag_reranker(model_name: str, top_n: int = 3):
+def get_flag_reranker(model_name: str, top_n: int = 3) -> FlagEmbeddingReranker:
     """
     Get a FlagEmbeddingReranker instance.
     """
