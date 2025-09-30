@@ -170,32 +170,3 @@ class ConfigReader(BaseModel):
         if self._config is None:
             self._config = self.load_config()
         return self._config
-
-    def validate_config(self) -> List[str]:
-        """Validate the configuration and return any errors."""
-        errors = []
-
-        try:
-            config = self.get_config()
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            errors.append(f"Failed to load configuration: {str(e)}")
-            return errors
-
-        # Build lookup sets for names
-        llm_names = set(getattr(llm, "name", None) for llm in config.llms)
-        qt_names = set(getattr(qt, "name", None) for qt in config.query_transformers)
-
-        # Validate LLM references in query transformers
-        for qt in config.query_transformers:
-            transform_config = qt
-            qt_name = getattr(qt, "name", None)
-            if transform_config.llm_config and transform_config.llm_config not in llm_names:
-                errors.append(
-                    f"Query transformer '{qt_name}' references unknown LLM '{transform_config.llm_config}'"
-                )
-
-        # Validate required fields
-        if not config.vector_store.index_name:
-            errors.append("Vector store index_name is required")
-
-        return errors
