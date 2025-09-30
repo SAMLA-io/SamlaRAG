@@ -87,10 +87,6 @@ else:
     from framework.rag_builder import RAGBuilder
 
     rag_builder = RAGBuilder("config_examples/advanced_config.json")
-    query_engine = rag_builder.build_pipeline()
-    response = query_engine.query("Compare the families of Emma Stone and Ryan Gosling")
-    print("Response:", response.response)
-    print("\nSource nodes:")
-    for node in response.source_nodes:
-        print(f"{node.node.text[:200]}...")
-        print("-" * 100)
+    pipeline = rag_builder.build_pipeline()
+    response = pipeline.query("Compare the families of Emma Stone and Ryan Gosling")
+    print("Response:", response)
