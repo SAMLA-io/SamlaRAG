@@ -7,11 +7,13 @@
     },
     "query_transformers": {
         "hyde": {
+            "name": "hyde",
             "type": "hyde",
             "llm": "gpt-4o-mini",
             "include_original": true
         },
         "step_decompose": {
+            "name": "step_decompose",
             "type": "step_decompose",
             "llm": "gpt-4o-mini",
             "verbose": true
