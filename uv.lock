@@ -516,6 +516,7 @@ dependencies = [
     { name = "llama-index-vector-stores-pinecone" },
     { name = "pinecone", extra = ["grpc"] },
     { name = "python-dotenv" },
+    { name = "uvicorn" },
     { name = "wikipedia" },
 ]
 
@@ -532,6 +533,7 @@ requires-dist = [
     { name = "llama-index-vector-stores-pinecone", specifier = ">=0.7.1" },
     { name = "pinecone", extras = ["grpc"], specifier = ">=7.3.0" },
     { name = "python-dotenv", specifier = ">=1.1.1" },
+    { name = "uvicorn", specifier = ">=0.35.0" },
     { name = "wikipedia", specifier = ">=1.4.0" },
 ]
 
